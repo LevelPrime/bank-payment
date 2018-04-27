@@ -17,14 +17,19 @@ class AccountPaymentOrder(models.Model):
         pay_method = self.payment_method_id
         if pay_method.code != 'sepa_direct_debit':
             return super(AccountPaymentOrder, self).generate_payment_file()
-        pain_flavor = pay_method.pain_version
+        pain_split = self.payment_method_id.pain_version.split('-',1)
+        pain_flavor = self.payment_method_id.pain_version
+        pain_variant = pain_split[1] if len(pain_split) > 1 else ''
         # We use pain_flavor.startswith('pain.008.001.xx')
         # to support country-specific extensions such as
         # pain.008.001.02.ch.01 (cf l10n_ch_sepa)
         if pain_flavor.startswith('pain.008.001.02'):
             bic_xml_tag = 'BIC'
             name_maxsize = 70
-            root_xml_tag = 'CstmrDrctDbtInitn'
+            if pain_variant == 'CBI-IT':
+                root_xml_tag = False
+            else:
+                root_xml_tag = 'CstmrDrctDbtInitn'
         elif pain_flavor.startswith('pain.008.003.02'):
             bic_xml_tag = 'BIC'
             name_maxsize = 70
@@ -56,10 +61,17 @@ class AccountPaymentOrder(models.Model):
         }
         nsmap = self.generate_pain_nsmap()
         attrib = self.generate_pain_attrib()
-        xml_root = etree.Element('Document', nsmap=nsmap, attrib=attrib)
-        pain_root = etree.SubElement(xml_root, root_xml_tag)
+        if pain_variant == 'CBI-IT':
+            xml_root = etree.Element('CBIBdySDDReq', nsmap=nsmap, attrib=attrib)
+            xml_root.attrib['{{{xsi}}}schemaLocation'.format(xsi=nsmap['xsi'])] = 'urn:CBI:xsd:CBIBdySDDReq.00.01.00 CBIBdySDDReq.00.01.00.xsd'
+        else:
+            xml_root = etree.Element('Document', nsmap=nsmap, attrib=attrib)
+        if root_xml_tag:
+            pain_root = etree.SubElement(xml_root, root_xml_tag)
+        else:
+            pain_root = xml_root
         # A. Group header
-        group_header, nb_of_transactions_a, control_sum_a = \
+        group_header, nb_of_transactions_a, control_sum_a, payment_root = \
             self.generate_group_header_block(pain_root, gen_args)
         transactions_count_a = 0
         amount_control_sum_a = 0.0
@@ -119,7 +131,7 @@ class AccountPaymentOrder(models.Model):
             # B. Payment info
             payment_info, nb_of_transactions_b, control_sum_b = \
                 self.generate_start_payment_info_block(
-                    pain_root,
+                    payment_root,
                     "self.name + '-' + "
                     "sequence_type + '-' + requested_date.replace('-', '')  "
                     "+ '-' + priority + '-' + category_purpose",
@@ -157,11 +169,18 @@ class AccountPaymentOrder(models.Model):
                     payment_info, 'DrctDbtTxInf')
                 payment_identification = etree.SubElement(
                     dd_transaction_info, 'PmtId')
-                instruction_identification = etree.SubElement(
-                    payment_identification, 'InstrId')
-                instruction_identification.text = self._prepare_field(
-                    'Instruction Identification', 'line.name',
-                    {'line': line}, 35, gen_args=gen_args)
+                if pain_flavor == 'pain.008.001.02.ch.01':
+                    instruction_identification = etree.SubElement(
+                        payment_identification, 'InstrId')
+                    instruction_identification.text = self._prepare_field(
+                        'Instruction Identification', 'line.name',
+                        {'line': line}, 35, gen_args=gen_args)
+                if pain_flavor == 'pain.008.001.02-CBI-IT':
+                    instruction_identification = etree.SubElement(
+                        payment_identification, 'InstrId')
+                    instruction_identification.text = self._prepare_field(
+                        'Instruction Identification', 'line.name',
+                        {'line': line}, 6, gen_args=gen_args)
                 end2end_identification = etree.SubElement(
                     payment_identification, 'EndToEndId')
                 end2end_identification.text = self._prepare_field(
@@ -223,8 +242,9 @@ class AccountPaymentOrder(models.Model):
                 self.generate_remittance_info_block(
                     dd_transaction_info, line, gen_args)
 
-            nb_of_transactions_b.text = unicode(transactions_count_b)
-            control_sum_b.text = '%.2f' % amount_control_sum_b
+            if nb_of_transactions_b:
+                nb_of_transactions_b.text = unicode(transactions_count_b)
+                control_sum_b.text = '%.2f' % amount_control_sum_b
         nb_of_transactions_a.text = unicode(transactions_count_a)
         control_sum_a.text = '%.2f' % amount_control_sum_a
 

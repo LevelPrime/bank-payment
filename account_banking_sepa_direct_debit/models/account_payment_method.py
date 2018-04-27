@@ -10,6 +10,7 @@ class AccountPaymentMethod(models.Model):
 
     pain_version = fields.Selection(selection_add=[
         ('pain.008.001.02', 'pain.008.001.02 (recommended for direct debit)'),
+        ('pain.008.001.02-CBI-IT', 'pain.008.001.02 (direct debit in Italy)'),
         ('pain.008.001.03', 'pain.008.001.03'),
         ('pain.008.001.04', 'pain.008.001.04'),
         ('pain.008.003.02', 'pain.008.003.02 (direct debit in Germany)'),
@@ -24,4 +25,6 @@ class AccountPaymentMethod(models.Model):
             path = 'account_banking_sepa_direct_debit/data/%s.xsd'\
                 % self.pain_version
             return path
+        elif self.pain_version in [ 'pain.008.001.02-CBI-IT' ]:
+            return 'account_banking_sepa_direct_debit/data/CBIBdySDDReq.00.01.00.xsd'
         return super(AccountPaymentMethod, self).get_xsd_file_path()
