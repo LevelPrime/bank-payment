@@ -434,9 +434,10 @@ class AccountPaymentOrder(models.Model):
                     party_agent_mmbid.text = 'NOTPROVIDED'
                 return True
             else:
-                if not partner_bank.bank_id.banca_estera:
+                # If it's an Italian Bank we are done
+                if partner_bank.acc_type == 'iban' and partner_bank.sanitized_acc_number.upper().startswith('IT'):
                     return True
-                # else: be careful we need to specify the BIC code when in Italian CBI
+                # else: For not Italian banks it's necessary to specify the DbtrAgt node
 
         if partner_bank.bank_bic:
             party_agent = etree.SubElement(parent_node, '%sAgt' % party_type)
