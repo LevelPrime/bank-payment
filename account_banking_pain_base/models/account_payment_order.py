@@ -163,10 +163,10 @@ class AccountPaymentOrder(models.Model):
     def generate_pain_nsmap(self):
         self.ensure_one()
         pain_flavor = self.payment_mode_id.payment_method_id.pain_version
-        if pain_flavor == 'pain.008.001.02-CBI-IT':
+        if pain_flavor.startswith('CBIBdySDDReq'):
             nsmap = {
                 'xsi': 'http://www.w3.org/2001/XMLSchema-instance',
-                None: 'urn:CBI:xsd:CBIBdySDDReq.00.01.00',
+                None: 'urn:CBI:xsd:%s' % pain_flavor,
             }
         else:
             nsmap = {
@@ -193,7 +193,7 @@ class AccountPaymentOrder(models.Model):
         #     <CBIEnvelSDDReqLogMsg>
         #         <CBISDDReqLogMsg>
         #             <GrpHdr xmlns="urn:CBI:xsd:CBISDDReqLogMsg.00.01.00">
-        if gen_args.get('pain_flavor') == 'pain.008.001.02-CBI-IT':
+        if gen_args.get('pain_flavor').startswith('CBIBdySDDReq'):
             phyMsgInf = etree.SubElement( parent_node, 'PhyMsgInf' )
             phyMsgTpCd = etree.SubElement( phyMsgInf, 'PhyMsgTpCd' )
             phyMsgTpCd.text = 'INC-SDDC-01'  # TODO: Replace with proper SDD CORE/B2B identifier
@@ -203,7 +203,8 @@ class AccountPaymentOrder(models.Model):
             CBIEnvelSDDReqLogMsg = etree.SubElement( parent_node, 'CBIEnvelSDDReqLogMsg' )
             CBISDDReqLogMsg = etree.SubElement( CBIEnvelSDDReqLogMsg, 'CBISDDReqLogMsg' )
             payment_root = CBISDDReqLogMsg
-            group_header = etree.SubElement( CBISDDReqLogMsg, 'GrpHdr', attrib={'xmlns': 'urn:CBI:xsd:CBISDDReqLogMsg.00.01.00'} )
+            group_header = etree.SubElement( CBISDDReqLogMsg, 'GrpHdr',
+                                             attrib={'xmlns': 'urn:CBI:xsd:CBISDDReqLogMsg.%s' % gen_args.get('pain_flavor').split('.',1)[1]} )
         else:
             group_header = etree.SubElement(parent_node, 'GrpHdr')
             payment_root = group_header
@@ -236,8 +237,9 @@ class AccountPaymentOrder(models.Model):
             self, parent_node, payment_info_ident,
             priority, local_instrument, category_purpose, sequence_type,
             requested_date, eval_ctx, gen_args):
-        if gen_args.get('pain_flavor') == 'pain.008.001.02-CBI-IT':
-            payment_info = etree.SubElement( parent_node, 'PmtInf', attrib={'xmlns': 'urn:CBI:xsd:CBISDDReqLogMsg.00.01.00'} )
+        if gen_args.get('pain_flavor').startswith('CBIBdySDDReq'):
+            payment_info = etree.SubElement( parent_node, 'PmtInf',
+                                             attrib={'xmlns': 'urn:CBI:xsd:CBISDDReqLogMsg.%s' % gen_args.get('pain_flavor').split('.',1)[1]} )
         else:
             payment_info = etree.SubElement(parent_node, 'PmtInf')
         payment_info_identification = etree.SubElement(
@@ -250,7 +252,7 @@ class AccountPaymentOrder(models.Model):
         nb_of_transactions = False
         control_sum = False
         # But not for Italy!?
-        if gen_args.get('pain_flavor') not in ('pain.001.001.02', 'pain.008.001.02-CBI-IT' ):
+        if gen_args.get('pain_flavor') not in ('pain.001.001.02', 'CBIBdySDDReq.00.01.00' ):
             batch_booking = etree.SubElement(payment_info, 'BtchBookg')
             batch_booking.text = unicode(self.batch_booking).lower()
         # The "SEPA Customer-to-bank
@@ -419,7 +421,7 @@ class AccountPaymentOrder(models.Model):
         #   </FinInstnId>
         # </DbtrAgt>
         #
-        if gen_args.get( 'pain_flavor' ) == 'pain.008.001.02-CBI-IT':
+        if gen_args.get( 'pain_flavor' ).startswith('CBIBdySDDReq'):
             if party_type == 'Cdtr':
                 party_agent = etree.SubElement( parent_node, '%sAgt' % party_type )
                 party_agent_institution = etree.SubElement(

@@ -26,10 +26,7 @@ class AccountPaymentOrder(models.Model):
         if pain_flavor.startswith('pain.008.001.02'):
             bic_xml_tag = 'BIC'
             name_maxsize = 70
-            if pain_variant == 'CBI-IT':
-                root_xml_tag = False
-            else:
-                root_xml_tag = 'CstmrDrctDbtInitn'
+            root_xml_tag = 'CstmrDrctDbtInitn'
         elif pain_flavor.startswith('pain.008.003.02'):
             bic_xml_tag = 'BIC'
             name_maxsize = 70
@@ -42,12 +39,17 @@ class AccountPaymentOrder(models.Model):
             bic_xml_tag = 'BICFI'
             name_maxsize = 140
             root_xml_tag = 'CstmrDrctDbtInitn'
+        elif pain_flavor.startswith('CBIBdySDDReq'):
+            bic_xml_tag = 'BIC'
+            name_maxsize = 70
+            root_xml_tag = False
         else:
             raise UserError(
                 _("Payment Type Code '%s' is not supported. The only "
                   "Payment Type Code supported for SEPA Direct Debit are "
-                  "'pain.008.001.02', 'pain.008.001.03' and "
-                  "'pain.008.001.04'.") % pain_flavor)
+                  "'pain.008.001.02', 'pain.008.001.03', "
+                  "'pain.008.001.04' and 'CBIBdySDDReq.00.01.00'.") % pain_flavor)
+        pay_method = self.payment_mode_id.payment_method_id
         xsd_file = pay_method.get_xsd_file_path()
         gen_args = {
             'bic_xml_tag': bic_xml_tag,
@@ -61,9 +63,10 @@ class AccountPaymentOrder(models.Model):
         }
         nsmap = self.generate_pain_nsmap()
         attrib = self.generate_pain_attrib()
-        if pain_variant == 'CBI-IT':
+        if pain_flavor.startswith( 'CBIBdySDDReq' ):
             xml_root = etree.Element('CBIBdySDDReq', nsmap=nsmap, attrib=attrib)
-            xml_root.attrib['{{{xsi}}}schemaLocation'.format(xsi=nsmap['xsi'])] = 'urn:CBI:xsd:CBIBdySDDReq.00.01.00 CBIBdySDDReq.00.01.00.xsd'
+            xml_root.attrib['{{{xsi}}}schemaLocation'.format(xsi=nsmap['xsi'])] = 'urn:CBI:xsd:{pain_flavor} {pain_flavor}.xsd'.\
+                format(pain_flavor=pain_flavor)
         else:
             xml_root = etree.Element('Document', nsmap=nsmap, attrib=attrib)
         if root_xml_tag:
@@ -175,7 +178,7 @@ class AccountPaymentOrder(models.Model):
                     instruction_identification.text = self._prepare_field(
                         'Instruction Identification', 'line.name',
                         {'line': line}, 35, gen_args=gen_args)
-                if pain_flavor == 'pain.008.001.02-CBI-IT':
+                if pain_flavor.startswith('CBIBdySDDReq'):
                     instruction_identification = etree.SubElement(
                         payment_identification, 'InstrId')
                     instruction_identification.text = self._prepare_field(
