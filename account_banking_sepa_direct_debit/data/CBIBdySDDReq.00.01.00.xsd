@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- edited with XMLSpy v2013 rel. 2 (x64) (http://www.altova.com) by Ivana Gargiulo (CONSORZIO CUSTOMER TO BUSINESS INTERACTION - CBI) -->
 <!-- Entrata in vigore: 20/11/2016 -->
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:LMSG="urn:CBI:xsd:CBISDDReqLogMsg.00.01.00" xmlns:SGNT="urn:CBI:xsd:CBISgnInf.001.04" xmlns="urn:CBI:xsd:CBIBdySDDReq.00.01.00" targetNamespace="urn:CBI:xsd:CBIBdySDDReq.00.01.00" elementFormDefault="qualified">
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:LMSG="urn:CBI:xsd:CBISDDReqLogMsg.00.01.00" xmlns="urn:CBI:xsd:CBIBdySDDReq.00.01.00" targetNamespace="urn:CBI:xsd:CBIBdySDDReq.00.01.00" elementFormDefault="qualified">
 	<!-- Namespace import -->
 	<xs:import namespace="urn:CBI:xsd:CBISDDReqLogMsg.00.01.00" schemaLocation="CBISDDReqLogMsg.00.01.00.xsd"/>
-	<xs:import namespace="urn:CBI:xsd:CBISgnInf.001.04" schemaLocation="CBISgnInf.001.04.xsd"/>
+	<!--xs:import namespace="urn:CBI:xsd:CBISgnInf.001.04" schemaLocation="CBISgnInf.001.04.xsd"/-->
 	<xs:element name="CBIBdySDDReq" type="CBIBdySDDReq.00.01.00"/>
 	<!-- Message Body structure definition -->
 	<xs:complexType name="CBIBdySDDReq.00.01.00">
