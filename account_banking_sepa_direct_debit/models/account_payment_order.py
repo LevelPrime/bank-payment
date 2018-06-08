@@ -2,13 +2,18 @@
 # © 2016 Akretion (Alexis de Lattre <alexis.delattre@akretion.com>)
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-from odoo import api, models, _
+from odoo import api, models, fields, _
 from odoo.exceptions import UserError
 from lxml import etree
 
 
 class AccountPaymentOrder(models.Model):
     _inherit = 'account.payment.order'
+
+    scheme = fields.Selection([
+        ('CORE', 'Basic (CORE)'),
+        ('B2B', 'Enterprise (B2B)')],
+        string='Scheme', default="CORE", track_visibility='onchange')
 
     @api.multi
     def generate_payment_file(self):

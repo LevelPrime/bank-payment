@@ -196,7 +196,12 @@ class AccountPaymentOrder(models.Model):
         if gen_args.get('pain_flavor').startswith('CBIBdySDDReq'):
             phyMsgInf = etree.SubElement( parent_node, 'PhyMsgInf' )
             phyMsgTpCd = etree.SubElement( phyMsgInf, 'PhyMsgTpCd' )
-            phyMsgTpCd.text = 'INC-SDDC-01'  # TODO: Replace with proper SDD CORE/B2B identifier
+            if self.scheme == 'CORE':
+                phyMsgTpCd.text = 'INC-SDDC-01'
+            elif self.scheme == 'B2B':
+                phyMsgTpCd.text = 'INC-SDDB-01'
+            else:
+                raise UserError(_('Invalid CBI Debit Order Scheme {}'.format(self.scheme)))
             numLogMsg = etree.SubElement( phyMsgInf, 'NbOfLogMsg' )
             #numLogMsg = etree.SubElement( phyMsgInf, 'NumLogMsg' )
             numLogMsg.text = '1'  # Normally only 1 CBIEnvelSDDLogMsg
