@@ -13,7 +13,8 @@ class AccountPaymentOrder(models.Model):
     scheme = fields.Selection([
         ('CORE', 'Basic (CORE)'),
         ('B2B', 'Enterprise (B2B)')],
-        string='Scheme', default="CORE", track_visibility='onchange')
+        string='Scheme', default=lambda self: self.env.user.company_id.sepa_payment_order_schema,
+        track_visibility='onchange')
 
     @api.multi
     def generate_payment_file(self):
