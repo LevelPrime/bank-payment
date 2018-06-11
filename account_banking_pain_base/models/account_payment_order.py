@@ -344,6 +344,11 @@ class AccountPaymentOrder(models.Model):
                 iniparty_org_other_scheme_name = etree.SubElement(
                     iniparty_org_other_scheme, 'Prtry')
                 iniparty_org_other_scheme_name.text = initiating_party_scheme
+            if gen_args.get('pain_flavor').startswith('CBIBdySDDReq') and \
+                    (not initiating_party_issuer or initiating_party_issuer != 'CBI'):
+                raise UserError(
+                    _("Missing 'Initiating Party Issuer' must be set to 'CBI' "
+                      "for the company '%s'.") % self.company_id.name)
             if initiating_party_issuer:
                 iniparty_org_other_issuer = etree.SubElement(
                     iniparty_org_other, 'Issr')
