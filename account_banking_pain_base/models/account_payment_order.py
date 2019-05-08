@@ -256,17 +256,21 @@ class AccountPaymentOrder(models.Model):
         payment_method.text = gen_args['payment_method']
         nb_of_transactions = False
         control_sum = False
-        # But not for Italy!?
-        if gen_args.get('pain_flavor') not in ('pain.001.001.02', 'CBIBdySDDReq.00.01.00' ):
+        
+        if gen_args.get('pain_flavor') != 'pain.001.001.02':
             batch_booking = etree.SubElement(payment_info, 'BtchBookg')
             batch_booking.text = unicode(self.batch_booking).lower()
         # The "SEPA Customer-to-bank
         # Implementation guidelines" for SCT and SDD says that control sum
         # and nb_of_transactions should be present
         # at both "group header" level and "payment info" level
-            nb_of_transactions = etree.SubElement(
-                payment_info, 'NbOfTxs')
-            control_sum = etree.SubElement(payment_info, 'CtrlSum')
+        
+        # But not for Italy!?
+            if gen_args.get('pain_flavor') != 'CBIBdySDDReq.00.01.00':
+                nb_of_transactions = etree.SubElement(
+                    payment_info, 'NbOfTxs')
+                control_sum = etree.SubElement(payment_info, 'CtrlSum')
+        
         payment_type_info = etree.SubElement(
             payment_info, 'PmtTpInf')
         if priority and gen_args['payment_method'] != 'DD':
