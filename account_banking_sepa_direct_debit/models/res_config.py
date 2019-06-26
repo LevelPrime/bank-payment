@@ -11,3 +11,8 @@ class ResConfigSettings(models.TransientModel):
         related='company_id.sepa_creditor_identifier',
         readonly=False,
     )
+
+    sepa_payment_order_schema = fields.Selection(
+        related='company_id.sepa_payment_order_schema',
+        readonly=False,
+    )

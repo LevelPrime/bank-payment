@@ -15,6 +15,9 @@
                            class="col-md-3 o_light_label"/>
                     <field name="sepa_creditor_identifier"
                            placeholder="Write the ICS of your company"/>
+                    <label for="sepa_payment_order_schema"
+                           class="col-md-3 o_light_label"/>
+                    <field name="sepa_payment_order_schema"/>
                 </div>
             </xpath>
         </field>
